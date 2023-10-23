@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>File Transfer App</title>
+		<link rel="icon" href="favicon.ico" type="image/x-icon" />
+	</head>
+	<body>
+		<h2>Upload File</h2>
+		<form action="/upload" method="POST" enctype="multipart/form-data" netlify>
+			<label for="ipAddress">Receiver's IP Address:</label>
+			<input type="text" name="ipAddress" required />
+			<br /><br />
+			<input type="file" name="file" />
+			<button type="submit">Upload</button>
+		</form>
+
+		<div id="fileList">
+			<h3>Uploaded Files:</h3>
+			<ul></ul>
+		</div>
+		<script>
+			fetch('/uploaded-files')
+				.then((response) => response.json())
+				.then((files) => {
+					const fileList = document.querySelector('#fileList ul');
+					files.forEach((file) => {
+						const li = document.createElement('li');
+						const link = document.createElement('a');
+						link.href = `/uploads/${file}`;
+						link.download = file; // Suggests download when link is clicked
+						link.textContent = file;
+						li.appendChild(link);
+						fileList.appendChild(li);
+					});
+				})
+				.catch((error) => {
+					console.error('Error fetching uploaded files:', error);
+				});
+		</script>
+	</body>
+</html>
