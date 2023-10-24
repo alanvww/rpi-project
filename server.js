@@ -29,6 +29,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 		await formData.append('file', fs.createReadStream(file.path));
 
 		try {
+			console.log(targetIP);
 			await axios.post(`http://${targetIP}:3000/upload`, formData, {
 				headers: { 'Content-Type': 'multipart/form-data' },
 			});
