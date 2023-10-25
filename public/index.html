@@ -4,23 +4,60 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>File Transfer App</title>
-		<link rel="icon" href="favicon.ico" type="image/x-icon" />
+		<script src="/socket.io/socket.io.js"></script>
 	</head>
 	<body>
 		<h2>Upload File</h2>
-		<form action="/upload" method="POST" enctype="multipart/form-data" netlify>
-			<label for="ipAddress">Receiver's IP Address:</label>
-			<input type="text" name="ipAddress" />
+		<form id="uploadForm" enctype="multipart/form-data">
+			<label for="targetIP">Target IP Address:</label>
+			<input
+				type="text"
+				id="targetIP"
+				name="targetIP"
+				placeholder="e.g., 192.168.1.10"
+			/>
 			<br /><br />
-			<input type="file" name="file" />
-			<button type="submit">Upload</button>
+			<input type="file" name="file" required />
+			<button type="button" onclick="uploadFile()">Upload</button>
 		</form>
 
 		<div id="fileList">
-			<h3>Uploaded Files:</h3>
+			<h3>Received Files:</h3>
 			<ul></ul>
 		</div>
+
 		<script>
+			const socket = io();
+
+			function uploadFile() {
+				const form = document.getElementById('uploadForm');
+				const formData = new FormData(form);
+				const targetIP = formData.get('targetIP');
+				const file = formData.get('file');
+
+				const reader = new FileReader();
+				reader.onload = function () {
+					const arrayBuffer = this.result;
+					socket.emit('send-file', {
+						filename: file.name,
+						fileBuffer: new Uint8Array(arrayBuffer),
+						targetIP: targetIP,
+					});
+				};
+				reader.readAsArrayBuffer(file);
+			}
+
+			socket.on('file-received', (data) => {
+				const fileList = document.querySelector('#fileList ul');
+				const li = document.createElement('li');
+				const link = document.createElement('a');
+				link.href = `/uploads/${data.filename}`;
+				link.download = data.filename;
+				link.textContent = data.filename;
+				li.appendChild(link);
+				fileList.appendChild(li);
+			});
+
 			fetch('/uploaded-files')
 				.then((response) => response.json())
 				.then((files) => {
@@ -29,7 +66,7 @@
 						const li = document.createElement('li');
 						const link = document.createElement('a');
 						link.href = `/uploads/${file}`;
-						link.download = file; // Suggests download when link is clicked
+						link.download = file;
 						link.textContent = file;
 						li.appendChild(link);
 						fileList.appendChild(li);
