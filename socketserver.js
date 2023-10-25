@@ -11,7 +11,6 @@ const io = socketIo(server);
 
 const PORT = 3000;
 
-// Configure storage
 const storage = multer.diskStorage({
 	destination: './uploads/',
 	filename: (req, file, cb) => {
@@ -21,18 +20,14 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-app.use(express.static('public')); // Serve static files from 'public' directory
+app.use(express.static('public'));
 
 io.on('connection', (socket) => {
 	console.log('A user connected');
 
 	socket.on('send-file', async (data) => {
 		const { file, targetIP } = data;
-		// Use the file data to save, process, or send it further
-		// Note: you might want to implement your own mechanism for sending the file data using socket.io
-
-		// After processing the file, you can emit a response to the client
-		socket.emit('file-response', { message: 'File received and processed' });
+		io.emit('receive-file', { file: file, ip: targetIP });
 	});
 
 	socket.on('disconnect', () => {
@@ -42,16 +37,14 @@ io.on('connection', (socket) => {
 
 app.post('/upload', upload.single('file'), (req, res) => {
 	if (req.file) {
-		// Assuming that we will send the file content to a specific socket.io client
-		// In reality, you'd probably want more logic here to determine which client should receive the file
-		io.emit('receive-file', { file: req.file });
+		const targetIP = req.body.ipAddress; // Extract the IP address from the form
+		io.emit('send-file', { file: req.file, targetIP: targetIP });
 		res.send('File uploaded and sent via socket.io');
 	} else {
 		res.redirect('/');
 	}
 });
 
-// Display 'uploads' folder contents
 app.use('/uploads', express.static('uploads'));
 
 app.get('/uploaded-files', (req, res) => {
