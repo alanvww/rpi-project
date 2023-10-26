@@ -9,6 +9,14 @@
 	<body>
 		<h2>Upload File</h2>
 		<form id="uploadForm" enctype="multipart/form-data">
+			<label for="targetIP">Target IP Address:</label>
+			<input
+				type="text"
+				id="targetIP"
+				name="targetIP"
+				placeholder="e.g., 192.168.1.10"
+			/>
+			<br /><br />
 			<input type="file" name="file" required />
 			<button type="button" onclick="uploadFile()">Upload</button>
 		</form>
@@ -24,6 +32,7 @@
 			function uploadFile() {
 				const form = document.getElementById('uploadForm');
 				const formData = new FormData(form);
+				const targetIP = formData.get('targetIP');
 				const file = formData.get('file');
 
 				const reader = new FileReader();
@@ -32,6 +41,7 @@
 					socket.emit('send-file', {
 						filename: file.name,
 						fileBuffer: new Uint8Array(arrayBuffer),
+						targetIP: targetIP,
 					});
 				};
 				reader.readAsArrayBuffer(file);
